@@ -1,0 +1,39 @@
+[gd_scene load_steps=8 format=3 uid="uid://jqg4ydxfpcub"]
+
+[ext_resource type="Script" uid="uid://bxyyun3mcoeo3" path="res://components/_archive/v1_sync_transform_resimulate.gd" id="1_yfgql"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_8cj0n"]
+bounce = 0.5
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_f3sb7"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_8cj0n"]
+noise_type = 4
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_uwrxv"]
+noise = SubResource("FastNoiseLite_8cj0n")
+seamless = true
+as_normal_map = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
+albedo_color = Color(1, 0.7137255, 0, 1)
+metallic = 0.86
+roughness = 0.1
+normal_enabled = true
+normal_texture = SubResource("NoiseTexture2D_uwrxv")
+
+[sub_resource type="SphereMesh" id="SphereMesh_fj7yv"]
+material = SubResource("StandardMaterial3D_8cj0n")
+
+[node name="PlayerControlledBall" type="RigidBody3D"]
+mass = 10.0
+physics_material_override = SubResource("PhysicsMaterial_8cj0n")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_f3sb7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_fj7yv")
+
+[node name="NetworkMovement" type="Node" parent="."]
+script = ExtResource("1_yfgql")

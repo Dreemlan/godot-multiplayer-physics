@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhkfp6t1n5kor"]
+
+[ext_resource type="Script" uid="uid://btusp2elb5aj" path="res://scripts/server_camera.gd" id="1_5ojcn"]
+
+[node name="ServerCamera" type="RigidBody3D"]
+gravity_scale = 0.0
+lock_rotation = true
+linear_damp = 10.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
+script = ExtResource("1_5ojcn")
