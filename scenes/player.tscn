@@ -1,0 +1,49 @@
+[gd_scene load_steps=5 format=3 uid="uid://c2iftx1mjhm5y"]
+
+[ext_resource type="Script" uid="uid://dt828ee81suid" path="res://scripts/player_controller.gd" id="1_qhqgy"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3vyb7"]
+radius = 1.0
+height = 2.2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_g2els"]
+height = 2.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
+size = Vector3(0.2, 0.2, 1)
+
+[node name="Player" type="RigidBody3D"]
+mass = 30.0
+can_sleep = false
+lock_rotation = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+shape = SubResource("CapsuleShape3D_3vyb7")
+
+[node name="VisualBody" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VisualBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("CapsuleMesh_g2els")
+skeleton = NodePath("../..")
+
+[node name="PlayerController" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+script = ExtResource("1_qhqgy")
+
+[node name="PlayerInput" type="Node3D" parent="PlayerController"]
+
+[node name="Camera3D" type="Camera3D" parent="PlayerController/PlayerInput"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.25)
+
+[node name="ArmRight" type="MeshInstance3D" parent="PlayerController"]
+transform = Transform3D(0.9659258, 0.12940952, -0.22414386, 0, 0.8660254, 0.5, 0.25881904, -0.4829629, 0.83651626, 0.4, -0.25, -0.4)
+mesh = SubResource("BoxMesh_3vyb7")
+
+[node name="ArmLeft" type="MeshInstance3D" parent="PlayerController"]
+transform = Transform3D(0.96592593, -0.12940952, 0.2241439, 0, 0.8660254, 0.5, -0.25881904, -0.48296294, 0.83651626, -0.4, -0.25, -0.4)
+mesh = SubResource("BoxMesh_3vyb7")
+
+[node name="FloorDetect" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)

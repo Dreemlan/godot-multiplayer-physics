@@ -6,7 +6,7 @@ var mouse_sensitivity := 0.1
 var twist_input := 0.0
 var pitch_input := 0.0
 
-var fly_speed := 5.0 
+var fly_speed := 2.0 
 
 
 func _ready():
