@@ -17,20 +17,20 @@ var pending_inputs: Array = []
 var last_confirmed_input: int = 0
 
 # Interpolation / Smoothing
-const SNAPSHOT_BUFFER_SIZE: int = 20
+const SNAPSHOT_BUFFER_SIZE: int = 40
 var snapshots: Array = []
 const INTERP_DELAY_MS: int = 100
 const MAX_VISUAL_DRIFT : float = 0.12
 const CORRECTION_FACTOR: float = 0.2
 
 # Movement
-const MOVE_SPEED: float = 5.0
+const MOVE_SPEED: float = 10.0
 var cam_dir: Vector3 = Vector3.ZERO
 
 
 ## Core
 
-func _ready() -> void:	
+func _ready() -> void:
 	if is_multiplayer_authority():
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
@@ -42,30 +42,35 @@ func _unhandled_input(event):
 			if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 				_rotate_camera(event)
 				cam_dir = -basis.z.normalized()
-		
-		if event is InputEventKey:
-			_free_mouse()
+		elif event.is_action_pressed("esc"):
+			_toggle_mouse_mode()
 
 
 func _process(_delta: float) -> void:
-	if is_multiplayer_authority():
-		_client_process()
-	
 	_smooth_correction_toward_physics()
 	_update_visual_transform()
+
+
+func _physics_process(_delta: float) -> void:
+	if is_multiplayer_authority():
+		_client_process()
 
 
 func _client_process() -> void:
 	input_seq += 1
 	input_dir = Input.get_vector("move_left", "move_right", "move_up", "move_down").normalized()
-	var input_state = {"seq": input_seq, "dir": input_dir}
+	
+	var input_state = {
+		"seq": input_seq,
+		"dir": input_dir
+	}
 	
 	_apply_movement(input_dir)
 	
 	pending_inputs.append(input_state)
 	
 	server_receive_input.rpc_id(1, input_state)
-
+	server_receive_camera_basis.rpc(basis)
 
 
 ## Logic
@@ -75,7 +80,6 @@ func _rotate_camera(event: InputEventMouseMotion) -> void:
 	pitch_input -= event.relative.y * mouse_sensitivity
 	pitch_input = clamp(pitch_input, -85, 85)
 	basis = _quat_rotate(twist_input, pitch_input)
-	server_receive_camera_basis.rpc(basis)
 
 
 ## RPC
@@ -126,7 +130,7 @@ func client_receive_state(server_state: Dictionary, confirmed_input: int) -> voi
 
 ## Helper
 
-func _free_mouse() -> void:
+func _toggle_mouse_mode() -> void:
 	if Input.is_action_just_pressed("ui_cancel"):
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -138,9 +142,6 @@ func _quat_rotate(twist, pitch) -> Basis:
 	var pitch_quat = Quaternion(Vector3.RIGHT, deg_to_rad(pitch))
 	return Basis(twist_quat * pitch_quat)
 
-
-## Helper
-
 func _apply_movement(dir: Vector2) -> void:
 	if dir == Vector2.ZERO: return
 	var move_dir = basis * Vector3(dir.x, 0, dir.y)
@@ -148,14 +149,10 @@ func _apply_movement(dir: Vector2) -> void:
 	force.y = 0
 	body.apply_central_impulse(force)
 
-
 func _prune_pending_inputs() -> void:
 	pending_inputs = pending_inputs.filter(
 		func(i): return i["seq"] > last_confirmed_input
 	)
-	#if pending_inputs.size() > MAX_INPUTS:
-		#pending_inputs = pending_inputs.slice(-MAX_INPUTS, MAX_INPUTS)
-
 
 func _update_visual_transform() -> void:
 	if snapshots.size() < 2:
@@ -188,6 +185,7 @@ func _update_visual_transform() -> void:
 	# ---- interpolation / extrapolation -------------------------------
 	if newer["time"] != older["time"]:
 		var t = float(target_frame - older["time"]) / float(newer["time"] - older["time"])
+		t = clamp(t, 0.0, 1.0)
 		var interp_pos = older["pos"].lerp(newer["pos"], t)
 
 		var q_old = Quaternion(older["basis"])

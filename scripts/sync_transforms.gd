@@ -5,21 +5,26 @@ extends Node
 
 # Interpolation / Smoothing
 var snapshots: Array = []
-const SNAPSHOT_BUFFER_SIZE: int = 20
+const SNAPSHOT_BUFFER_SIZE: int = 40
 const INTERP_DELAY_MS: int = 200
-const MAX_VISUAL_DRIFT : float = 0.2
-const CORRECTION_FACTOR: float = 0.2
+const MAX_VISUAL_DRIFT : float = 0.4
+const CORRECTION_FACTOR: float = 0.05
 
 
 ## Core Logic
 
 func _process(_delta: float) -> void:
 	if multiplayer.is_server():
-		_server_process()
+		pass
 	else:
-		return
 		_smooth_correction_toward_physics()
 		_update_visual_transform()
+
+func _physics_process(_delta: float) -> void:
+	if multiplayer.is_server():
+		_server_process()
+	else:
+		pass
 
 
 ## Server Logic
@@ -30,7 +35,7 @@ func _server_process() -> void:
 		"basis": body.global_basis,
 		"lin_vel": body.linear_velocity,
 		"ang_vel": body.angular_velocity,
-		"time": Engine.get_physics_frames()
+		"time": Time.get_ticks_msec()
 	}
 	client_receive_state.rpc(server_state)
 
@@ -62,33 +67,29 @@ func _update_visual_transform() -> void:
 	if snapshots.size() < 2:
 		return
 
-	var fps = ProjectSettings.get_setting("physics/common/physics_ticks_per_second")
-	var delay_frames = int(round(INTERP_DELAY_MS / (1000.0 / fps)))
-	var target_frame = Engine.get_physics_frames() - delay_frames
+	var now = Time.get_ticks_msec()
+	var target_time = now - INTERP_DELAY_MS
 
-	# ---- locate surrounding snapshots (same as before) -----------------
 	var older = null
 	var newer = null
 	
 	for i in range(snapshots.size() - 1, -1, -1):
 		var s = snapshots[i]
-		if s["time"] <= target_frame:
+		if s["time"] <= target_time:
 			older = s
 			if i + 1 < snapshots.size():
 				newer = snapshots[i + 1]
 			break
 	
 	if older == null:
-		# Target is older than the oldest snapshot → use the oldest
 		older = snapshots.front()
 		newer = snapshots[1] if snapshots.size() > 1 else older
 	elif newer == null:
-		# Target is newer than the newest snapshot → extrapolate
-		newer = older   # makes the later branch treat it as “no newer”
+		newer = older
 
-	# ---- interpolation / extrapolation -------------------------------
 	if newer["time"] != older["time"]:
-		var t = float(target_frame - older["time"]) / float(newer["time"] - older["time"])
+		var t = float(target_time - older["time"]) / float(newer["time"] - older["time"])
+		t = clamp(t, 0.0, 1.0)
 		var interp_pos = older["pos"].lerp(newer["pos"], t)
 
 		var q_old = Quaternion(older["basis"])
@@ -100,7 +101,7 @@ func _update_visual_transform() -> void:
 		visual_body.global_basis = interp_basis
 	else:
 		var latest = older
-		var dt = (target_frame - latest["time"]) * (1.0 / fps)
+		var dt = (target_time - older["time"]) / 1000.0  # convert ms → s
 		
 		var extrap_pos = latest["pos"] + latest["lin_vel"] * dt
 		

@@ -1,6 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c2iftx1mjhm5y"]
+[gd_scene load_steps=7 format=3 uid="uid://c2iftx1mjhm5y"]
 
 [ext_resource type="Script" uid="uid://dt828ee81suid" path="res://scripts/player_controller.gd" id="1_qhqgy"]
+[ext_resource type="PackedScene" uid="uid://bbh234p6g6bgq" path="res://scenes/floor_detect.tscn" id="2_g2els"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_g2els"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3vyb7"]
 radius = 1.0
@@ -13,7 +16,10 @@ height = 2.2
 size = Vector3(0.2, 0.2, 1)
 
 [node name="Player" type="RigidBody3D"]
+collision_layer = 2
+collision_mask = 5
 mass = 30.0
+physics_material_override = SubResource("PhysicsMaterial_g2els")
 can_sleep = false
 lock_rotation = true
 
@@ -45,5 +51,5 @@ mesh = SubResource("BoxMesh_3vyb7")
 transform = Transform3D(0.96592593, -0.12940952, 0.2241439, 0, 0.8660254, 0.5, -0.25881904, -0.48296294, 0.83651626, -0.4, -0.25, -0.4)
 mesh = SubResource("BoxMesh_3vyb7")
 
-[node name="FloorDetect" type="RayCast3D" parent="."]
+[node name="FloorDetect" parent="." instance=ExtResource("2_g2els")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)

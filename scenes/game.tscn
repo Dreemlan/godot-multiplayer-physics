@@ -1,8 +1,9 @@
-[gd_scene load_steps=21 format=3 uid="uid://hv50o70eg525"]
+[gd_scene load_steps=23 format=3 uid="uid://hv50o70eg525"]
 
 [ext_resource type="Script" uid="uid://g7drc843eqpg" path="res://scripts/game.gd" id="1_lnu2h"]
 [ext_resource type="Texture2D" uid="uid://b8a3igifupdic" path="res://assets/prototype/prototype_tile_001.png" id="2_yqjtg"]
 [ext_resource type="Script" uid="uid://115vqf0jjm5k" path="res://scripts/sync_transforms.gd" id="3_lnu2h"]
+[ext_resource type="Script" uid="uid://rskc8c4lrm2e" path="res://scripts/outofbounds.gd" id="4_lbhrr"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lnu2h"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -38,8 +39,10 @@ texture_filter = 0
 size = Vector3(1, 5, 20)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_yqjtg"]
+size = Vector3(3, 1, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_lnu2h"]
+size = Vector3(3, 1, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_iywne"]
 size = Vector3(10, 10, 1)
@@ -60,6 +63,8 @@ albedo_color = Color(0, 1, 0, 0.1882353)
 
 [sub_resource type="BoxMesh" id="BoxMesh_p57ef"]
 size = Vector3(10, 10, 1)
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_lbhrr"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_lnu2h")
@@ -102,7 +107,8 @@ mesh = SubResource("BoxMesh_iywne")
 skeleton = NodePath("../../Wall1")
 
 [node name="RigidBody3D" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.336533, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 11.336533, 0)
+collision_mask = 3
 
 [node name="SyncTransforms" type="Node" parent="RigidBody3D"]
 script = ExtResource("3_lnu2h")
@@ -135,3 +141,11 @@ shape = SubResource("BoxShape3D_u5sy4")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Goal2"]
 material_override = SubResource("StandardMaterial3D_u5sy4")
 mesh = SubResource("BoxMesh_p57ef")
+
+[node name="OutOfBounds" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("4_lbhrr")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="OutOfBounds"]
+shape = SubResource("WorldBoundaryShape3D_lbhrr")
